@@ -56,15 +56,21 @@ public:
   allocator_type get_allocator() const {
     return allocator_type();
   }
-  mapped_type& at(const key_type& key) {
+  mapped_type& at(const key_type& key)
+  requires AreKeysUnique
+  {
     iterator i = tree.lower_bound(key);
     return i->second;
   }
-  mapped_type& at(const key_type& key) const {
+  mapped_type& at(const key_type& key) const
+  requires AreKeysUnique
+  {
     iterator i = tree.lower_bound(key);
     return i->second;
   }
-  mapped_type& operator[](const key_type& key) {
+  mapped_type& operator[](const key_type& key)
+  requires AreKeysUnique
+  {
     iterator i = tree.lower_bound(key);
     if (i == tree.end() || key_comp()(key, i->first))
       i = tree.insert_hint(i, value_type(std::piecewise_construct,
@@ -72,7 +78,9 @@ public:
                                          std::tuple<>()));
     return i->second;
   }
-  mapped_type& operator[](key_type&& key) {
+  mapped_type& operator[](key_type&& key)
+  requires AreKeysUnique
+  {
     iterator i = tree.lower_bound(key);
     if (i == tree.end() || key_comp()(key, i->first))
       i = tree.insert_hint(i, value_type(std::piecewise_construct,
