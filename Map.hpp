@@ -2,7 +2,6 @@
 #define MAP_HPP
 
 #include "Tree.hpp"
-#include <utility>
 
 template <class Key, class T, class Compare, bool AreKeysUnique>
 class MapBase {

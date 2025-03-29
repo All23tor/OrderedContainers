@@ -22,4 +22,14 @@ int main() {
   map["Cuatro"] = 4;
   for (auto&& [key, value] : map)
     std::cout << key << " : " << value << '\n';
+  MultiMap<std::string, int> mmap;
+  mmap.insert({"Uno", 1});
+  mmap.insert({"Dos", 2});
+  mmap.insert({"Dos", 2});
+  mmap.insert({"Tres", 3});
+  mmap.insert({"Tres", 3});
+  mmap.insert({"Tres", 3});
+  std::cout << std::endl;
+  for (auto&& [key, value] : mmap)
+    std::cout << key << " : " << value << '\n';
 }
