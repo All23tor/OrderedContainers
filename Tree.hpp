@@ -31,11 +31,13 @@ struct NodeBase {
 };
 
 template <class Val>
-struct Node : public NodeBase {
-  union {
-    Val val;
-  };
+class Node : public NodeBase {
+  template <class... Args>
+  Node(Args&&... args) : val(args...) {}
+  ~Node() = default;
 
+public:
+  Val val;
   static constexpr auto cast(NodeBase* base) {
     return reinterpret_cast<Node*>(base);
   }
@@ -46,14 +48,11 @@ struct Node : public NodeBase {
 
   template <class... Args>
   static Node* create(Args&&... args) {
-    Node* node = std::allocator<Node>().allocate(1);
-    ::new (&node->val) Val(std::forward<Args>(args)...);
-    return node;
+    return new Node(std::forward<Args>(args)...);
   }
 
   static void drop(Node* x) noexcept {
-    std::destroy_at(&x->val);
-    std::allocator<Node>().deallocate(x, 1);
+    delete x;
   }
 
   static void deep_erase(Node* x) {
