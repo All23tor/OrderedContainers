@@ -1,7 +1,7 @@
 #ifndef STL_TREE_H
-#define STL_TREE_H 1
+#define STL_TREE_H
 
-#include <memory>
+#include <algorithm>
 
 namespace {
 enum class Color : bool {
@@ -461,7 +461,7 @@ struct iterator {
 };
 } // namespace
 
-template <class Key, class Val, class Hasher, class Compare, bool AreKeysUnique>
+template <class Key, class Val, class Hasher, class Compare, bool UniqueKeys>
 class RbTree {
   using NodeBase = ::NodeBase;
   using Node = ::Node<Val>;
@@ -502,7 +502,7 @@ private:
       x = comp ? x->left : x->right;
     }
 
-    if constexpr (!AreKeysUnique)
+    if constexpr (!UniqueKeys)
       return Res(x, y);
 
     iterator j = iterator(y);
@@ -522,7 +522,7 @@ private:
     using Res = std::pair<NodeBase*, NodeBase*>;
 
     auto compare = [this](const Key& first, const Key& second) {
-      if constexpr (AreKeysUnique)
+      if constexpr (UniqueKeys)
         return key_compare(first, second);
       else
         return !key_compare(second, first);
@@ -545,10 +545,10 @@ private:
       } else
         return get_insert_pos(k);
     } else {
-      if constexpr (AreKeysUnique) {
+      if constexpr (UniqueKeys)
         if (!key_compare(key(position.node), k))
           return Res(position.node, nullptr);
-      }
+
       iterator after(position.node);
       if (position.node == header.rightmost())
         return Res(nullptr, header.rightmost());
@@ -558,7 +558,7 @@ private:
         else
           return Res(after.node, after.node);
       } else {
-        if constexpr (AreKeysUnique)
+        if constexpr (UniqueKeys)
           return get_insert_pos(k);
         else
           return Res(nullptr, nullptr);
@@ -644,7 +644,7 @@ public:
   auto insert(Arg&& v) {
     auto res = get_insert_pos(Hasher()(v));
 
-    if constexpr (AreKeysUnique) {
+    if constexpr (UniqueKeys) {
       using Res = std::pair<iterator, bool>;
       if (res.second)
         return Res(insert_node(res.first, res.second,
@@ -663,11 +663,10 @@ public:
       return insert_node(res.first, res.second,
                          Node::create(std::forward<Arg>(v)));
 
-    if constexpr (AreKeysUnique)
+    if constexpr (UniqueKeys)
       return iterator(res.first);
-    else {
+    else
       return insert_equal_lower_node(Node::create(std::forward<Arg>(v)));
-    }
   }
 
   iterator erase(iterator position) {

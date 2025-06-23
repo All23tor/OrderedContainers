@@ -2,9 +2,10 @@
 #define MAP_HPP
 
 #include "Tree.hpp"
+#include <memory>
 
-template <class Key, class T, class Compare, bool AreKeysUnique>
-class MapBase {
+template <class Key, class T, class Compare, bool UniqueKeys>
+class BasicMap {
 public:
   using key_type = Key;
   using mapped_type = T;
@@ -25,29 +26,30 @@ private:
     }
   };
 
-  using Tree = RbTree<Key, value_type, SelectFirst, Compare, AreKeysUnique>;
+  using Tree = RbTree<Key, value_type, SelectFirst, Compare, UniqueKeys>;
   Tree tree;
 
 public:
-  MapBase() = default;
-  MapBase(const Compare& comp) : tree(comp) {}
+  BasicMap() = default;
+  ~BasicMap() = default;
+  BasicMap(const BasicMap&) = default;
+  BasicMap(BasicMap&&) = default;
+  BasicMap& operator=(const BasicMap&) = default;
+  BasicMap& operator=(BasicMap&&) = default;
+
+  BasicMap(const Compare& comp) : tree(comp) {}
   template <class InputIterator>
-  MapBase(InputIterator first, InputIterator last, Compare comp = Compare()) :
+  BasicMap(InputIterator first, InputIterator last, Compare comp = Compare()) :
       tree(comp) {
     while (first != last)
       tree.insert(*first++);
   }
-  MapBase(const MapBase&) = default;
-  MapBase(MapBase&&) = default;
-  MapBase(std::initializer_list<value_type> init, Compare comp = Compare()) :
+  BasicMap(std::initializer_list<value_type> init, Compare comp = Compare()) :
       tree(comp) {
     for (auto&& e : init)
       tree.insert(e);
   }
-  ~MapBase() = default;
-  MapBase& operator=(const MapBase&) = default;
-  MapBase& operator=(MapBase&&) = default;
-  MapBase& operator=(std::initializer_list<value_type> init) {
+  BasicMap& operator=(std::initializer_list<value_type> init) {
     tree.clear();
     for (auto&& e : init)
       tree.insert(e);
@@ -56,19 +58,19 @@ public:
     return allocator_type();
   }
   mapped_type& at(const key_type& key)
-  requires AreKeysUnique
+  requires UniqueKeys
   {
     iterator i = tree.lower_bound(key);
     return i->second;
   }
   mapped_type& at(const key_type& key) const
-  requires AreKeysUnique
+  requires UniqueKeys
   {
     iterator i = tree.lower_bound(key);
     return i->second;
   }
   mapped_type& operator[](const key_type& key)
-  requires AreKeysUnique
+  requires UniqueKeys
   {
     iterator i = tree.lower_bound(key);
     if (i == tree.end() || key_comp()(key, i->first))
@@ -78,7 +80,7 @@ public:
     return i->second;
   }
   mapped_type& operator[](key_type&& key)
-  requires AreKeysUnique
+  requires UniqueKeys
   {
     iterator i = tree.lower_bound(key);
     if (i == tree.end() || key_comp()(key, i->first))
@@ -198,7 +200,7 @@ public:
       tree.erase(p.first++);
     return old_size - tree.size();
   }
-  void swap(MapBase& other) {
+  void swap(BasicMap& other) {
     std::swap(*this, other);
   }
   iterator find(const Key& key) {
@@ -245,17 +247,17 @@ public:
   value_compare value_comp() const {
     return value_compare(tree.key_comp());
   }
-  bool operator==(const MapBase& other) {
+  bool operator==(const BasicMap& other) {
     return tree == other.tree;
   }
-  auto operator<=>(const MapBase& other) {
+  auto operator<=>(const BasicMap& other) {
     return tree <=> other.tree;
   }
 };
 
 template <class Key, class T, class Compare = std::less<Key>>
-using Map = MapBase<Key, T, Compare, true>;
+using Map = BasicMap<Key, T, Compare, true>;
 template <class Key, class T, class Compare = std::less<Key>>
-using MultiMap = MapBase<Key, T, Compare, false>;
+using MultiMap = BasicMap<Key, T, Compare, false>;
 
 #endif

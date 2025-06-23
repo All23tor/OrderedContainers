@@ -2,9 +2,10 @@
 #define SET_HPP
 
 #include "Tree.hpp"
+#include <memory>
 
 template <class Key, class Compare, bool AreKeysUnique>
-class SetBase {
+class BasicSet {
   using Tree = RbTree<Key, Key, std::identity, Compare, AreKeysUnique>;
   Tree tree;
 
@@ -25,27 +26,28 @@ public:
   using reverse_iterator = std::reverse_iterator<iterator>;
   using const_reverse_iterator = std::reverse_iterator<const_iterator>;
 
-  SetBase() = default;
-  explicit SetBase(const Compare& compare) : tree(compare) {};
+  BasicSet() = default;
+  ~BasicSet() = default;
+  BasicSet(const BasicSet& other) = default;
+  BasicSet(BasicSet&& other) = default;
+  BasicSet& operator=(const BasicSet&) = default;
+  BasicSet& operator=(BasicSet&&) = default;
+
+  explicit BasicSet(const Compare& compare) : tree(compare) {};
   template <class InputIterator>
-  SetBase(InputIterator first, InputIterator last,
-          const Compare& compare = Compare()) :
+  BasicSet(InputIterator first, InputIterator last,
+           const Compare& compare = Compare()) :
       tree(compare) {
     while (first != last)
       tree.insert(*first++);
   }
-  SetBase(const SetBase& other) = default;
-  SetBase(SetBase&& other) = default;
-  SetBase(std::initializer_list<value_type> init,
-          const Compare& compare = Compare()) :
+  BasicSet(std::initializer_list<value_type> init,
+           const Compare& compare = Compare()) :
       tree(compare) {
     for (auto&& e : init)
       tree.insert(e);
   }
-  ~SetBase() = default;
-  SetBase& operator=(const SetBase&) = default;
-  SetBase& operator=(SetBase&&) = default;
-  SetBase& operator=(std::initializer_list<value_type> init) {
+  BasicSet& operator=(std::initializer_list<value_type> init) {
     tree.clear();
     for (auto&& e : init)
       tree.insert(e);
@@ -146,7 +148,7 @@ public:
       tree.erase(p.first++);
     return old_size - tree.size();
   }
-  void swap(SetBase& other) {
+  void swap(BasicSet& other) {
     std::swap(*this, other);
   }
   iterator find(const Key& key) {
@@ -182,17 +184,17 @@ public:
   value_compare key_comp() const {
     return tree.key_comp();
   }
-  bool operator==(const SetBase& other) {
+  bool operator==(const BasicSet& other) {
     return tree == other.tree;
   }
-  auto operator<=>(const SetBase& other) {
+  auto operator<=>(const BasicSet& other) {
     return tree <=> other.tree;
   }
 };
 
 template <class Key, class Compare = std::less<Key>>
-using Set = SetBase<Key, Compare, true>;
+using Set = BasicSet<Key, Compare, true>;
 template <class Key, class Compare = std::less<Key>>
-using MultiSet = SetBase<Key, Compare, false>;
+using MultiSet = BasicSet<Key, Compare, false>;
 
 #endif
