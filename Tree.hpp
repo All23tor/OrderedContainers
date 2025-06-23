@@ -38,11 +38,11 @@ class Node : public NodeBase {
 
 public:
   Val val;
-  static constexpr auto cast(NodeBase* base) {
+  static constexpr auto up_cast(NodeBase* base) {
     return reinterpret_cast<Node*>(base);
   }
 
-  static constexpr auto cast(const NodeBase* base) {
+  static constexpr auto up_cast(const NodeBase* base) {
     return reinterpret_cast<const Node*>(base);
   }
 
@@ -58,8 +58,8 @@ public:
   static void deep_erase(Node* x) {
     if (!x)
       return;
-    deep_erase(cast(x->left));
-    deep_erase(cast(x->right));
+    deep_erase(up_cast(x->left));
+    deep_erase(up_cast(x->right));
     Node::drop(x);
   }
 
@@ -68,8 +68,8 @@ public:
       return nullptr;
     Node* node = create(x->val);
     node->parent = parent;
-    node->right = deep_copy(cast(x->right), node);
-    node->left = deep_copy(cast(x->left), node);
+    node->right = deep_copy(up_cast(x->right), node);
+    node->left = deep_copy(up_cast(x->left), node);
     node->color = x->color;
     return node;
   }
@@ -124,7 +124,7 @@ struct Header {
   }
 
   Header(const Header& x) {
-    root() = Node::deep_copy(Node::cast(x.root()), &super_root);
+    root() = Node::deep_copy(Node::up_cast(x.root()), &super_root);
     if (root()) {
       root()->parent = &super_root;
       leftmost() = root()->minimum();
@@ -158,7 +158,7 @@ struct Header {
   }
 
   ~Header() {
-    Node::deep_erase(Node::cast(root()));
+    Node::deep_erase(Node::up_cast(root()));
   }
 
   Header& operator=(Header&& other) noexcept {
@@ -168,7 +168,7 @@ struct Header {
   }
 
   void clear() {
-    Node::deep_erase(Node::cast(root()));
+    Node::deep_erase(Node::up_cast(root()));
     root() = nullptr;
     leftmost() = &super_root;
     rightmost() = &super_root;
@@ -371,7 +371,7 @@ struct Header {
         x->color = Color::Black;
     }
 
-    Node::drop(Node::cast(y));
+    Node::drop(Node::up_cast(y));
   }
 };
 
@@ -397,12 +397,12 @@ struct iterator {
 
   [[nodiscard]]
   reference operator*() const noexcept {
-    return Node<Val>::cast(node)->val;
+    return Node<Val>::up_cast(node)->val;
   }
 
   [[nodiscard]]
   pointer operator->() const noexcept {
-    return &Node<Val>::cast(node)->val;
+    return &Node<Val>::up_cast(node)->val;
   }
 
   constexpr iterator& operator++() noexcept {
@@ -479,7 +479,7 @@ class RbTree {
   }
 
   static const Key& key(const NodeBase* node) {
-    return Hasher()(Node::cast(node)->val);
+    return Hasher()(Node::up_cast(node)->val);
   }
 
 public:
