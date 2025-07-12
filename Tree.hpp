@@ -1,7 +1,7 @@
 #ifndef STL_TREE_H
 #define STL_TREE_H
 
-#include <algorithm>
+#include <iterator>
 
 namespace {
 enum class Color : bool {
@@ -33,7 +33,7 @@ struct NodeBase {
 template <class Val>
 class Node : public NodeBase {
   template <class... Args>
-  Node(Args&&... args) : val(args...) {}
+  Node(Args&&... args) : val(std::forward<Args>(args)...) {}
   ~Node() = default;
 
 public:
@@ -297,14 +297,12 @@ struct Header {
       if (leftmost() == z) {
         if (!z->right)
           leftmost() = z->parent;
-
         else
           leftmost() = x->minimum();
       }
       if (rightmost() == z) {
-        if (z->left == 0)
+        if (!z->left)
           rightmost() = z->parent;
-
         else
           rightmost() = x->maximum();
       }
@@ -491,7 +489,6 @@ public:
 
 private:
   std::pair<NodeBase*, NodeBase*> get_insert_pos(const Key& k) {
-    using Res = std::pair<NodeBase*, NodeBase*>;
     NodeBase* x = begin_root();
     NodeBase* y = end_root();
 
@@ -503,24 +500,23 @@ private:
     }
 
     if constexpr (!UniqueKeys)
-      return Res(x, y);
-
-    iterator j = iterator(y);
-    if (comp) {
-      if (j == begin())
-        return Res(x, y);
-      else
-        --j;
+      return {x, y};
+    else {
+      iterator j = iterator(y);
+      if (comp) {
+        if (j == begin())
+          return {x, y};
+        else
+          --j;
+      }
+      if (key_compare(key(j.node), k))
+        return {x, y};
+      return {j.node, nullptr};
     }
-    if (key_compare(key(j.node), k))
-      return Res(x, y);
-    return Res(j.node, nullptr);
   }
 
   std::pair<NodeBase*, NodeBase*> get_insert_hint_pos(const_iterator position,
                                                       const Key& k) {
-    using Res = std::pair<NodeBase*, NodeBase*>;
-
     auto compare = [this](const Key& first, const Key& second) {
       if constexpr (UniqueKeys)
         return key_compare(first, second);
@@ -530,38 +526,38 @@ private:
 
     if (position.node == end_root()) {
       if (size() > 0 && compare(key(header.rightmost()), k))
-        return Res(nullptr, header.rightmost());
+        return {nullptr, header.rightmost()};
       else
         return get_insert_pos(k);
     } else if (compare(k, key(position.node))) {
       iterator before(position.node);
       if (position.node == header.leftmost())
-        return Res(header.leftmost(), header.leftmost());
+        return {header.leftmost(), header.leftmost()};
       else if (compare(key((--before).node), k)) {
         if (!before.node->right)
-          return Res(nullptr, before.node);
+          return {nullptr, before.node};
         else
-          return Res(position.node, position.node);
+          return {position.node, position.node};
       } else
         return get_insert_pos(k);
     } else {
       if constexpr (UniqueKeys)
         if (!key_compare(key(position.node), k))
-          return Res(position.node, nullptr);
+          return {position.node, nullptr};
 
       iterator after(position.node);
       if (position.node == header.rightmost())
-        return Res(nullptr, header.rightmost());
+        return {nullptr, header.rightmost()};
       else if (compare(k, key((++after).node))) {
         if (!position.node->right)
-          return Res(nullptr, position.node);
+          return {nullptr, position.node};
         else
-          return Res(after.node, after.node);
+          return {after.node, after.node};
       } else {
         if constexpr (UniqueKeys)
           return get_insert_pos(k);
         else
-          return Res(nullptr, nullptr);
+          return {nullptr, nullptr};
       }
     }
   }
