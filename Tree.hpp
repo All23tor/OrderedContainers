@@ -15,14 +15,14 @@ struct NodeBase {
   NodeBase* left;
   NodeBase* right;
 
-  NodeBase* minimum() noexcept {
+  NodeBase* minimum() {
     NodeBase* x = this;
     while (x->left)
       x = x->left;
     return x;
   }
 
-  NodeBase* maximum() noexcept {
+  NodeBase* maximum() {
     NodeBase* x = this;
     while (x->right)
       x = x->right;
@@ -51,7 +51,7 @@ public:
     return new Node(std::forward<Args>(args)...);
   }
 
-  static void drop(Node* x) noexcept {
+  static void drop(Node* x) {
     delete x;
   }
 
@@ -115,7 +115,7 @@ struct Header {
 
   NodeBase super_root;
   std::size_t node_count;
-  Header() noexcept {
+  Header() {
     root() = nullptr;
     leftmost() = &super_root;
     rightmost() = &super_root;
@@ -137,7 +137,7 @@ struct Header {
     node_count = x.node_count;
   }
 
-  Header(Header&& other) noexcept {
+  Header(Header&& other) {
     root() = other.root();
     if (root()) {
       root()->parent = &super_root;
@@ -161,7 +161,7 @@ struct Header {
     Node::deep_erase(Node::up_cast(root()));
   }
 
-  Header& operator=(Header&& other) noexcept {
+  Header& operator=(Header&& other) {
     this->~Header();
     new (this) Header(std::move(other));
     return *this;
@@ -176,15 +176,15 @@ struct Header {
     node_count = 0;
   }
 
-  auto&& root(this auto&& self) noexcept {
+  auto&& root(this auto&& self) {
     return self.super_root.parent;
   }
 
-  auto&& leftmost(this auto&& self) noexcept {
+  auto&& leftmost(this auto&& self) {
     return self.super_root.left;
   }
 
-  auto&& rightmost(this auto&& self) noexcept {
+  auto&& rightmost(this auto&& self) {
     return self.super_root.right;
   }
 
@@ -383,8 +383,8 @@ struct iterator {
 
   NodeBase* node;
 
-  iterator() noexcept {}
-  constexpr explicit iterator(NodeBase* x) noexcept : node(x) {}
+  iterator() {}
+  constexpr explicit iterator(NodeBase* x) : node(x) {}
 
   iterator(const iterator&) = default;
   iterator& operator=(const iterator&) = default;
@@ -394,16 +394,16 @@ struct iterator {
       : node(it.node) {}
 
   [[nodiscard]]
-  reference operator*() const noexcept {
+  reference operator*() const {
     return Node<Val>::up_cast(node)->val;
   }
 
   [[nodiscard]]
-  pointer operator->() const noexcept {
+  pointer operator->() const {
     return &Node<Val>::up_cast(node)->val;
   }
 
-  constexpr iterator& operator++() noexcept {
+  constexpr iterator& operator++() {
     if (node->right) {
       node = node->right;
       while (node->left)
@@ -421,13 +421,13 @@ struct iterator {
     return *this;
   }
 
-  constexpr iterator operator++(int) noexcept {
+  constexpr iterator operator++(int) {
     iterator tmp(node);
     ++*this;
     return tmp;
   }
 
-  constexpr iterator& operator--() noexcept {
+  constexpr iterator& operator--() {
     if (node->color == Color::Red && node->parent->parent == node)
       node = node->right;
     else if (node->left) {
@@ -446,14 +446,14 @@ struct iterator {
     return *this;
   }
 
-  constexpr iterator operator--(int) noexcept {
+  constexpr iterator operator--(int) {
     iterator tmp(node);
     --*this;
     return tmp;
   }
 
   [[nodiscard]]
-  friend bool operator==(const iterator& x, const iterator& y) noexcept {
+  friend bool operator==(const iterator& x, const iterator& y) {
     return x.node == y.node;
   }
 };
@@ -468,11 +468,11 @@ class RbTree {
   Header header;
   Compare key_compare;
 
-  NodeBase* begin_root() const noexcept {
+  NodeBase* begin_root() const {
     return header.root();
   }
 
-  NodeBase* end_root() const noexcept {
+  NodeBase* end_root() const {
     return const_cast<NodeBase*>(&header.super_root);
   }
 
@@ -614,21 +614,21 @@ public:
   RbTree(RbTree&& x) = default;
   RbTree& operator=(const RbTree& x) = default;
   RbTree& operator=(RbTree&& x) = default;
-  ~RbTree() noexcept = default;
+  ~RbTree() = default;
 
   Compare key_comp() const {
     return key_compare;
   }
 
-  auto begin(this auto&& self) noexcept {
+  auto begin(this auto&& self) {
     return cc_iterator<decltype(self)>(self.header.leftmost());
   }
 
-  auto end(this auto&& self) noexcept {
+  auto end(this auto&& self) {
     return cc_iterator<decltype(self)>(self.end_root());
   }
 
-  std::size_t size() const noexcept {
+  std::size_t size() const {
     return header.node_count;
   }
 
@@ -675,7 +675,7 @@ public:
     return erase(iterator(position.node));
   }
 
-  void clear() noexcept {
+  void clear() {
     header.clear();
   }
 

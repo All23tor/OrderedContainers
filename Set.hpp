@@ -2,7 +2,6 @@
 #define SET_HPP
 
 #include "Tree.hpp"
-#include <memory>
 
 template <class Key, class Compare, bool AreKeysUnique>
 class BasicSet {
@@ -99,7 +98,7 @@ public:
     return tree.size();
   }
   size_type max_size() const {
-    return std::numeric_limits<difference_type>::max() / sizeof(value_type);
+    return std::allocator_traits<std::allocator<key_type>>::max_size();
   }
   void clear() {
     tree.clear();
