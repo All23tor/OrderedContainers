@@ -515,25 +515,25 @@ private:
     }
   }
 
+  constexpr auto cmp(const Key& lhs, const Key& rhs) {
+    if constexpr (UniqueKeys)
+      return key_compare(lhs, rhs);
+    else
+      return !key_compare(rhs, lhs);
+  };
+
   std::pair<NodeBase*, NodeBase*> get_insert_hint_pos(const_iterator position,
                                                       const Key& k) {
-    auto compare = [this](const Key& first, const Key& second) {
-      if constexpr (UniqueKeys)
-        return key_compare(first, second);
-      else
-        return !key_compare(second, first);
-    };
-
     if (position.node == end_root()) {
-      if (size() > 0 && compare(key(header.rightmost()), k))
+      if (size() > 0 && cmp(key(header.rightmost()), k))
         return {nullptr, header.rightmost()};
       else
         return get_insert_pos(k);
-    } else if (compare(k, key(position.node))) {
+    } else if (cmp(k, key(position.node))) {
       iterator before(position.node);
       if (position.node == header.leftmost())
         return {header.leftmost(), header.leftmost()};
-      else if (compare(key((--before).node), k)) {
+      else if (cmp(key((--before).node), k)) {
         if (!before.node->right)
           return {nullptr, before.node};
         else
@@ -548,7 +548,7 @@ private:
       iterator after(position.node);
       if (position.node == header.rightmost())
         return {nullptr, header.rightmost()};
-      else if (compare(k, key((++after).node))) {
+      else if (cmp(k, key((++after).node))) {
         if (!position.node->right)
           return {nullptr, position.node};
         else
