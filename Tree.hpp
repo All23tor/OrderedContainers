@@ -377,12 +377,10 @@ struct iterator {
   requires Const
       : node(it.node) {}
 
-  [[nodiscard]]
   reference operator*() const {
     return Node<Val>::up_cast(node)->val;
   }
 
-  [[nodiscard]]
   pointer operator->() const {
     return &Node<Val>::up_cast(node)->val;
   }
@@ -436,10 +434,7 @@ struct iterator {
     return tmp;
   }
 
-  [[nodiscard]]
-  friend bool operator==(const iterator& x, const iterator& y) {
-    return x.node == y.node;
-  }
+  bool operator==(const iterator& y) const = default;
 };
 } // namespace
 
@@ -483,9 +478,7 @@ private:
       x = comp ? x->left : x->right;
     }
 
-    if constexpr (!UniqueKeys)
-      return {x, y};
-    else {
+    if constexpr (!UniqueKeys) {
       iterator j = iterator(y);
       if (comp) {
         if (j == begin())
@@ -496,7 +489,8 @@ private:
       if (key_compare(key(j.node), k))
         return {x, y};
       return {j.node, nullptr};
-    }
+    } else
+      return {x, y};
   }
 
   constexpr auto cmp(const Key& lhs, const Key& rhs) {
