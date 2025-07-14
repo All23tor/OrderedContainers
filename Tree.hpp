@@ -173,14 +173,13 @@ struct Header {
     return self.super_root.right;
   }
 
-  void insert_and_rebalance(const bool insert_left, NodeBase* x, NodeBase* p) {
+  void insert(const bool insert_left, NodeBase* x, NodeBase* p) {
     x->parent = p;
     x->left = x->right = nullptr;
     x->color = Color::Red;
 
     if (insert_left) {
       p->left = x;
-
       if (p == &super_root) {
         root() = x;
         rightmost() = x;
@@ -188,7 +187,6 @@ struct Header {
         leftmost() = x;
     } else {
       p->right = x;
-
       if (p == rightmost())
         rightmost() = x;
     }
@@ -230,9 +228,10 @@ struct Header {
       }
     }
     root()->color = Color::Black;
+    ++node_count;
   }
 
-  void rebalance_for_erase(NodeBase* z) {
+  void erase(NodeBase* z) {
     NodeBase* y = z;
     NodeBase* x{};
     NodeBase* x_parent{};
@@ -293,7 +292,7 @@ struct Header {
       }
     }
     if (y->color != Color::Red) {
-      while (x != root() && (x == 0 || x->color == Color::Black))
+      while (x != root() && (!x || x->color == Color::Black))
         if (x == x_parent->left) {
           NodeBase* w = x_parent->right;
           if (w->color == Color::Red) {
@@ -322,7 +321,6 @@ struct Header {
             break;
           }
         } else {
-
           NodeBase* w = x_parent->left;
           if (w->color == Color::Red) {
             w->color = Color::Black;
@@ -355,6 +353,7 @@ struct Header {
     }
 
     delete Node::up_cast(y);
+    --node_count;
   }
 };
 
@@ -550,8 +549,7 @@ private:
   iterator insert_node(NodeBase* x, NodeBase* p, Node* z) {
     bool insert_left = (x || p == end_root() || key_compare(key(z), key(p)));
 
-    header.insert_and_rebalance(insert_left, z, p);
-    ++header.node_count;
+    header.insert(insert_left, z, p);
     return iterator(z);
   }
 
@@ -559,8 +557,7 @@ private:
     bool insert_left = (p == end_root() || !key_compare(key(p), key(z)));
 
     NodeBase* base_z = z;
-    header.insert_and_rebalance(insert_left, base_z, p);
-    ++header.node_count;
+    header.insert(insert_left, base_z, p);
     return iterator(base_z);
   }
 
@@ -649,8 +646,7 @@ public:
   }
 
   iterator erase(iterator position) {
-    header.rebalance_for_erase((position++).node);
-    --header.node_count;
+    header.erase((position++).node);
     return position;
   }
 
