@@ -32,4 +32,5 @@ int main() {
   std::cout << std::endl;
   for (auto&& [key, value] : mmap)
     std::cout << key << " : " << value << '\n';
+  mmap.erase(mmap.find("Dos"));
 }

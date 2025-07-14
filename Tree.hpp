@@ -31,13 +31,11 @@ struct NodeBase {
 };
 
 template <class Val>
-class Node : public NodeBase {
+struct Node : NodeBase {
   template <class... Args>
   Node(Args&&... args) : val(std::forward<Args>(args)...) {}
-  ~Node() = default;
-
-public:
   Val val;
+
   static constexpr auto up_cast(NodeBase* base) {
     return reinterpret_cast<Node*>(base);
   }
@@ -46,27 +44,18 @@ public:
     return reinterpret_cast<const Node*>(base);
   }
 
-  template <class... Args>
-  static Node* create(Args&&... args) {
-    return new Node(std::forward<Args>(args)...);
-  }
-
-  static void drop(Node* x) {
-    delete x;
-  }
-
   static void deep_erase(Node* x) {
     if (!x)
       return;
     deep_erase(up_cast(x->left));
     deep_erase(up_cast(x->right));
-    Node::drop(x);
+    delete x;
   }
 
   static Node* deep_copy(Node* x, NodeBase* parent) {
     if (!x)
       return nullptr;
-    Node* node = create(x->val);
+    Node* node = new Node(x->val);
     node->parent = parent;
     node->right = deep_copy(up_cast(x->right), node);
     node->left = deep_copy(up_cast(x->left), node);
@@ -168,12 +157,8 @@ struct Header {
   }
 
   void clear() {
-    Node::deep_erase(Node::up_cast(root()));
-    root() = nullptr;
-    leftmost() = &super_root;
-    rightmost() = &super_root;
-    super_root.color = ::Color::Red;
-    node_count = 0;
+    this->~Header();
+    new (this) Header();
   }
 
   auto&& root(this auto&& self) {
@@ -369,7 +354,7 @@ struct Header {
         x->color = Color::Black;
     }
 
-    Node::drop(Node::up_cast(y));
+    delete Node::up_cast(y);
   }
 };
 
@@ -643,26 +628,24 @@ public:
     if constexpr (UniqueKeys) {
       using Res = std::pair<iterator, bool>;
       if (res.second)
-        return Res(insert_node(res.first, res.second,
-                               Node::create(std::forward<Arg>(v))),
-                   true);
+        return Res(
+            insert_node(res.first, res.second, new Node(std::forward<Arg>(v))),
+            true);
       return Res(iterator(res.first), false);
     } else
-      return insert_node(res.first, res.second,
-                         Node::create(std::forward<Arg>(v)));
+      return insert_node(res.first, res.second, new Node(std::forward<Arg>(v)));
   }
 
   template <class Arg>
   iterator insert_hint(const_iterator position, Arg&& v) {
     auto res = get_insert_hint_pos(position, Hasher()(v));
     if (res.second)
-      return insert_node(res.first, res.second,
-                         Node::create(std::forward<Arg>(v)));
+      return insert_node(res.first, res.second, new Node(std::forward<Arg>(v)));
 
     if constexpr (UniqueKeys)
       return iterator(res.first);
     else
-      return insert_equal_lower_node(Node::create(std::forward<Arg>(v)));
+      return insert_equal_lower_node(new Node(std::forward<Arg>(v)));
   }
 
   iterator erase(iterator position) {
