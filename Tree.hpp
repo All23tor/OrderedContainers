@@ -478,7 +478,7 @@ private:
       x = comp ? x->left : x->right;
     }
 
-    if constexpr (!UniqueKeys) {
+    if constexpr (UniqueKeys) {
       iterator j = iterator(y);
       if (comp) {
         if (j == begin())
